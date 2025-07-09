@@ -19,4 +19,6 @@ Building a loadbalancer from scratch
  3. Create a load balancer that can redirect requests to one of the backend servers 
  4. create logic that allos for the routing of multiple requests
  5. create logic to handle if one of the backend servers go down
+ 6. simple logging 
+ 7. simple testing 
     
