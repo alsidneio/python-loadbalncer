@@ -1,4 +1,5 @@
 import socket
+import threading
 
 # TODO: create a repsonse object so you can paramaterize the printed response
 
@@ -33,4 +34,7 @@ def start_backend_server(port):
 
 
 if __name__ == "__main__":
-    start_backend_server(6400)
+    ports = [6400, 6500, 6700]
+    for port in ports:
+        thread = threading.Thread(target=start_backend_server, args=(port,))
+        thread.start()
