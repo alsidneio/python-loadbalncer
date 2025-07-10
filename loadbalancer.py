@@ -19,8 +19,9 @@ def health_check():
             if health_response.status_code == 200:
                 if server not in healthy_servers:
                     healthy_servers.append(server)
-            elif server in healthy_servers:
-                healthy_servers.remove(server)
+            else:
+                if server in healthy_servers:
+                    healthy_servers.remove(server)
         except Exception as e:
             print(f"Error during health check for server {server}: {e}")
             if server in healthy_servers:
