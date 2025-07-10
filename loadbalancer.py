@@ -1,10 +1,41 @@
 import threading
 import socket
+from urllib import request
+import requests
+
+# this library is to simulate the randomness of
+# how an LB choose to route a request
+import random
+
+
+# this function is to handle the situation o of a downed server
+# specifically preventing the LB from routing to a dead server
+# and having, dropped request.
+def health_check():
+    global healthy_servers
+    for server in backend_servers:
+        try:
+            health_response = requests.get(f"http://{server[0]}:{server[1]}/health")
+            if health_response.status_code == 200:
+                if server not in healthy_servers:
+                    healthy_servers.append(server)
+            elif server in healthy_servers:
+                healthy_servers.remove(server)
+        except Exception as e:
+            print(f"Error during health check for server {server}: {e}")
+            if server in healthy_servers:
+                healthy_servers.remove(server)
 
 
 def handle_client(client_socket):
 
     request_data = client_socket.recv(1024).decode()
+
+    if not healthy_servers:
+        client_socket.sendall(
+            b"HTTP/1.1 503 service is unvailable \r\n\r\nNo Healthy upstream unavailable"
+        )
+        client_socket.close()
 
     print("Received request from: ", client_socket.getpeername())
     print(request_data)
@@ -12,7 +43,7 @@ def handle_client(client_socket):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as backend_socket:
 
         # This is the address of server that the request is being forwarded to
-        backend_address = ("localhost", 6400)
+        backend_address = random.choice(backend_servers)
         backend_socket.connect(backend_address)
         backend_socket.sendall(request_data.encode())
 
@@ -25,6 +56,9 @@ def handle_client(client_socket):
 
 
 def start_load_balancer(port):
+    # checks the health of servers on start up
+    health_check()
+
     # Create a TCP/IP socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
@@ -44,5 +78,8 @@ def start_load_balancer(port):
 
 
 if __name__ == "__main__":
-    # server that this is being forwarded to must already be running 
+    # pool of  servers that traffic is being routed to
+    backend_servers = [("localhost", 6400), ("localhost", 6500), ("localhost", 6700)]
+    healthy_servers = []
+    # server that this is being forwarded to must already be running
     start_load_balancer(9000)

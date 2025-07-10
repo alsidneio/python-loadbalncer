@@ -34,7 +34,7 @@ def start_backend_server(port):
 
 
 if __name__ == "__main__":
-    ports = [6400]
+    ports = [6400, 6500]
     for port in ports:
         thread = threading.Thread(target=start_backend_server, args=(port,))
         thread.start()
